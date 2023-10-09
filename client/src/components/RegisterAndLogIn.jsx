@@ -1,22 +1,22 @@
-import { useContext, useState } from 'react'
-import axios from 'axios'
-import { UserContext } from './UserContext'
+import { useContext, useState } from 'react';
+import axios from 'axios';
+import { UserContext } from './UserContext';
 
 export default function Register() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoginOrRegister, setIsLoginOrRegister] = useState('register')
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoginOrRegister, setIsLoginOrRegister] = useState('login');
 
-  const url = isLoginOrRegister === 'register' ? 'register' : 'login'
+  const url = isLoginOrRegister === 'register' ? 'register' : 'login';
 
-  const { setUsername: setLoggedInUsername, setId } = useContext(UserContext)
+  const { setUsername: setLoggedInUsername, setId } = useContext(UserContext);
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    const { data } = await axios.post(url, { username, password })
-    setLoggedInUsername(username)
-    setId(data.id)
-  }
+    e.preventDefault();
+    const { data } = await axios.post(url, { username, password });
+    setLoggedInUsername(username);
+    setId(data.id);
+  };
 
   return (
     <div className="bg-blue-50 h-screen flex items-center">
@@ -46,6 +46,7 @@ export default function Register() {
             <div>
               Already a member?
               <button
+                className="ml-1"
                 type="button"
                 href=""
                 onClick={() => setIsLoginOrRegister('login')}
@@ -56,8 +57,9 @@ export default function Register() {
           )}
           {isLoginOrRegister === 'login' && (
             <div>
-              Already a member?{' '}
+              Already a member?
               <button
+                className="ml-1"
                 type="button"
                 href=""
                 onClick={() => setIsLoginOrRegister('register')}
@@ -69,5 +71,5 @@ export default function Register() {
         </div>
       </form>
     </div>
-  )
+  );
 }

@@ -24,6 +24,15 @@ export default function Chat() {
     };
   }, []);
 
+  function handleMessage(e) {
+    const messageData = JSON.parse(e.data);
+    if ('online' in messageData) {
+      showOnlinePeople(messageData.online);
+    } else if ('text' in messageData ) {
+      setMessages((prev) => [...prev, { ...messageData }]);
+    }
+  }
+
   function showOnlinePeople(peopleArray) {
     const people = {};
     peopleArray.forEach(({ userId, username }) => {
@@ -32,24 +41,42 @@ export default function Chat() {
     setOnlinePeople(people);
   }
 
-  function sendMessage(e) {
-    e.preventDefault();
+  function sendMessage(e, file = null) {
+    if (e) e.preventDefault();
     ws.send(
       JSON.stringify({
         recipient: selectedUserId,
         text: newMessage,
+        file,
       })
     );
-    setNewMessage('');
-    setMessages((prev) => [
-      ...prev,
-      {
-        sender: id,
-        recipient: selectedUserId,
-        text: newMessage,
-        _id: Date.now(),
-      },
-    ]);
+    if (file) {
+      axios.get('/messages/' + selectedUserId).then((res) => {
+        setMessages(res.data);
+      });
+    } else {
+      setNewMessage('');
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: newMessage,
+          sender: id,
+          recipient: selectedUserId,
+          _id: Date.now(),
+        },
+      ]);
+    }
+  }
+
+  function sendFile(e) {
+    const reader = new FileReader();
+    reader.readAsDataURL(e.target.files[0]);
+    reader.onload = () => {
+      sendMessage(null, {
+        name: e.target.files[0].name,
+        data: reader.result,
+      });
+    };
   }
 
   function logOut() {
@@ -87,15 +114,6 @@ export default function Chat() {
       });
     }
   }, [selectedUserId]);
-
-  function handleMessage(e) {
-    const messageData = JSON.parse(e.data);
-    if ('online' in messageData) {
-      showOnlinePeople(messageData.online);
-    } else if ('text' in messageData) {
-      setMessages((prev) => [...prev, { ...messageData }]);
-    }
-  }
 
   const onlinePeopleExclOurUser = { ...onlinePeople };
   delete onlinePeopleExclOurUser[id];
@@ -152,6 +170,7 @@ export default function Chat() {
           </button>
         </div>
       </div>
+
       <div className="flex flex-col bg-blue-100 w-2/3 p-2">
         <div className="flex-grow mb-4">
           {!selectedUserId && (
@@ -180,6 +199,35 @@ export default function Chat() {
                       }`}
                     >
                       {message.text}
+                      {message.file && (
+                        <div className="">
+                          <a
+                            className="flex items-center gap-1 border-b"
+                            href={
+                              axios.defaults.baseURL +
+                              '/uploads/' +
+                              message.file
+                            }
+                            target="_blanc"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="w-4 h-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"
+                              />
+                            </svg>
+                            {message.file}
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -197,7 +245,8 @@ export default function Chat() {
               className="bg-white flex-grow rounded-md border p-2 "
               placeholder="Type your message here"
             />
-            <button type='button' className='bg-gray-500 rounded-md p-2 text-gray-100'>
+            <label className="bg-gray-500 rounded-md p-2 text-gray-100">
+              <input className="hidden" type="file" onChange={sendFile} />
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -212,7 +261,7 @@ export default function Chat() {
                   d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"
                 />
               </svg>
-            </button>
+            </label>
             <button
               type="submit"
               className="bg-blue-500 rounded-md p-2 text-white"
