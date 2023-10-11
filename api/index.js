@@ -149,23 +149,40 @@ wss.on('connection', (connection, req) => {
       );
     });
   }
-
   connection.isAlive = true;
 
-  connection.timer = setInterval(() => {
-    connection.ping();
-    connection.deathTimer = setTimeout(() => {
-      connection.isAlive = false;
-      clearInterval();
-      connection.terminate();
+  // Send a ping to the client to check if the connection is alive
+  connection.on('ping', () => {
+    connection.isAlive = true;
+    connection.pong();
+  });
+
+  // Set up a heartbeat mechanism
+  const heartbeat = setInterval(() => {
+    if (connection.isAlive === false) {
+      clearInterval(heartbeat);
+      connection.terminate(); // Terminate the connection
       notifyAboutOnlinePeople();
-      console.log('dead');
-    }, 1000);
+      console.log('Connection terminated (dead)');
+      return;
+    }
+
+    connection.isAlive = false;
+    connection.ping(); // Send a ping to the client
   }, 5000);
 
+  // Handle 'pong' messages from the client
   connection.on('pong', () => {
-    clearTimeout(connection.deathTimer);
+    connection.isAlive = true;
   });
+
+  // Handle connection close event
+  connection.on('close', () => {
+    clearInterval(heartbeat); // Clean up the heartbeat interval
+    notifyAboutOnlinePeople();
+    console.log('Connection closed');
+  });
+
 
   //read username and id from the cookie for this connection
   const cookies = req.headers.cookie;
