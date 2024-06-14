@@ -14,5 +14,9 @@
     "mongoose": "^7.5.4",
     "nodemon": "^3.0.1",
     "ws": "^8.14.2"
-  }
+  },
+  "scripts": {
+    "start": "node index.js", 
+    "vercel-start": "node index.js" 
+  }  
 }
