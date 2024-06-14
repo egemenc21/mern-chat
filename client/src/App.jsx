@@ -4,7 +4,7 @@ import UserContextProvider from './components/UserContext'
 import Routes from './components/Routes'
 
 function App() {
-  axios.defaults.baseURL = 'http://localhost:4000'
+  axios.defaults.baseURL = 'http://mern-chat-server-drab.vercel.app'
   axios.defaults.withCredentials = true
 
   return (
